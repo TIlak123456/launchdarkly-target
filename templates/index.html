@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABC Company — Landing Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+    <!--
+      =================================================================
+      LaunchDarkly Client-Side JavaScript SDK (v3.x via CDN)
+      =================================================================
+      This SDK handles:
+        - Client-side flag evaluation based on user context attributes
+        - Real-time targeting updates via streaming (SSE)
+        - User switching via identify() when the user selector is clicked
+
+      In production, install via npm: npm install launchdarkly-js-client-sdk
+      We use the CDN version here for demo simplicity (no build step needed).
+
+      FALLBACK: If this script fails to load (CDN down, blocked by firewall),
+      the page still renders with the server-side evaluated variation from
+      Flask. Only the user switching feature won't work.
+      =================================================================
+    -->
+    <script
+      crossorigin="anonymous"
+      src="https://unpkg.com/launchdarkly-js-client-sdk@3.6.0/dist/ldclient.min.js">
+    </script>
+</head>
+<body>
+
+    <!-- ================================================================= -->
+    <!-- Navigation Bar                                                     -->
+    <!-- ================================================================= -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <span class="logo">&#9670;</span>
+            <span class="company-name">ABC Company</span>
+        </div>
+        <div class="navbar-links">
+            <a href="#" class="nav-link active">Home</a>
+            <a href="#" class="nav-link">Product</a>
+            <a href="#" class="nav-link">Pricing</a>
+            <a href="#" class="nav-link">Docs</a>
+            <a href="#" class="nav-link">Contact</a>
+        </div>
+    </nav>
+
+    <!-- ================================================================= -->
+    <!-- User Selector Panel                                                -->
+    <!-- ================================================================= -->
+    <!-- This panel lets you switch between pre-defined users to see how    -->
+    <!-- different context attributes affect which banner variation is       -->
+    <!-- served. In a real app, the user context would come from your       -->
+    <!-- authentication/session system.                                      -->
+    <div class="user-selector-panel">
+        <div class="user-selector-header">
+            <span class="selector-icon">&#128101;</span>
+            <strong>User Simulator</strong>
+            <span class="selector-hint">— Switch users to see different targeting in action</span>
+        </div>
+        <div class="user-buttons">
+            {% for uid, user in users.items() %}
+            <button
+                class="user-btn {{ 'active' if uid == selected_user_id else '' }}"
+                data-user-id="{{ uid }}"
+                title="{{ user.description }}"
+            >
+                <span class="user-btn-name">{{ user.name }}</span>
+                <span class="user-btn-meta">{{ user.plan }} / {{ user.role }} / {{ user.country }}</span>
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- Hero Banner — THE TARGETED COMPONENT                               -->
+    <!-- ================================================================= -->
+    <!--                                                                     -->
+    <!-- THIS IS THE CORE COMPONENT controlled by the "hero-banner" flag.   -->
+    <!--                                                                     -->
+    <!-- HOW IT WORKS:                                                       -->
+    <!--   1. Flask (server-side) evaluates the flag and sets the CSS class  -->
+    <!--      "hero-{{ banner_variation }}" on this section element.         -->
+    <!--   2. CSS rules show ONLY the banner-content div matching the       -->
+    <!--      current variation and apply the correct gradient background.   -->
+    <!--   3. When the user clicks a different user button, the JS SDK      -->
+    <!--      calls identify(), gets the new variation, and swaps the class. -->
+    <!--                                                                     -->
+    <!-- VARIATION → VISUAL MAPPING:                                         -->
+    <!--   "control"          → Purple gradient  — "Build Better Software"  -->
+    <!--   "upgrade-cta"      → Pink/red gradient — "Upgrade to Pro"        -->
+    <!--   "enterprise-cta"   → Teal/green gradient — "Talk to Sales"       -->
+    <!--   "internal-preview" → Dark + red border — "AI Flag Suggestions"   -->
+    <!--                                                                     -->
+    <!-- TARGETING:                                                          -->
+    <!--   "control"          → Default (no rules match)                    -->
+    <!--   "upgrade-cta"      → Rule: plan = "free" (Alice, Dave)           -->
+    <!--   "enterprise-cta"   → Rule: plan = "enterprise" (Bob)             -->
+    <!--   "internal-preview" → Individual: user-003 (Carol)                -->
+    <!--                                                                     -->
+    <!-- FALLBACK:                                                           -->
+    <!--   If LaunchDarkly is unavailable, banner_variation defaults to      -->
+    <!--   "control" (set in app.py), so the default banner always shows.   -->
+    <!-- ================================================================= -->
+    <section id="hero-banner" class="hero-banner hero-{{ banner_variation }}">
+        <!-- Control Banner (default) -->
+        <div class="banner-content" data-variation="control">
+            <h1>Build Better Software, Faster</h1>
+            <p>ABC Company's platform helps teams deliver with confidence. Ship features safely with real-time control.</p>
+            <a href="#" class="cta-button cta-primary">Get Started Free</a>
+            <a href="#" class="cta-button cta-secondary">Watch Demo</a>
+        </div>
+
+        <!-- Upgrade CTA Banner (rule: plan = free) -->
+        <div class="banner-content" data-variation="upgrade-cta">
+            <div class="banner-badge">Limited Time Offer</div>
+            <h1>Upgrade to Pro — 50% Off This Month</h1>
+            <p>You're on the Free plan. Unlock advanced targeting, unlimited flags, and priority support with Pro.</p>
+            <a href="#" class="cta-button cta-upgrade">Upgrade to Pro Now</a>
+            <a href="#" class="cta-button cta-secondary">Compare Plans</a>
+        </div>
+
+        <!-- Enterprise CTA Banner (rule: plan = enterprise) -->
+        <div class="banner-content" data-variation="enterprise-cta">
+            <h1>Your Enterprise Account is Growing</h1>
+            <p>You're using 85% of your flag quota. Let's discuss scaling your account with a dedicated solutions engineer.</p>
+            <a href="#" class="cta-button cta-enterprise">Talk to Sales</a>
+            <a href="#" class="cta-button cta-secondary">View Usage Dashboard</a>
+        </div>
+
+        <!-- Internal Preview Banner (individual target: carol) -->
+        <div class="banner-content" data-variation="internal-preview">
+            <div class="banner-badge">Internal Preview</div>
+            <h1>Sneak Peek: AI-Powered Flag Suggestions</h1>
+            <p>You've been selected to preview our upcoming AI feature. It analyzes your codebase and suggests optimal flag configurations.</p>
+            <a href="#" class="cta-button cta-preview">Try AI Suggestions</a>
+            <a href="#" class="cta-button cta-secondary">Give Feedback</a>
+        </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- Targeting Info Panel                                                -->
+    <!-- ================================================================= -->
+    <section class="targeting-panel">
+        <h2>Targeting Details</h2>
+        <p>This panel shows real-time information about the current user's context and which flag variation they receive.</p>
+
+        <div class="info-grid">
+            <!-- Current User Context -->
+            <div class="info-card">
+                <h3>Current User Context</h3>
+                <div class="context-details" id="context-details">
+                    <div class="context-row">
+                        <span class="context-label">Key:</span>
+                        <span class="context-value" id="ctx-key">{{ selected_user.key }}</span>
+                    </div>
+                    <div class="context-row">
+                        <span class="context-label">Name:</span>
+                        <span class="context-value" id="ctx-name">{{ selected_user.name }}</span>
+                    </div>
+                    <div class="context-row">
+                        <span class="context-label">Email:</span>
+                        <span class="context-value" id="ctx-email">{{ selected_user.email }}</span>
+                    </div>
+                    <div class="context-row">
+                        <span class="context-label">Plan:</span>
+                        <span class="context-value highlight" id="ctx-plan">{{ selected_user.plan }}</span>
+                    </div>
+                    <div class="context-row">
+                        <span class="context-label">Role:</span>
+                        <span class="context-value" id="ctx-role">{{ selected_user.role }}</span>
+                    </div>
+                    <div class="context-row">
+                        <span class="context-label">Country:</span>
+                        <span class="context-value" id="ctx-country">{{ selected_user.country }}</span>
+                    </div>
+                    <div class="context-row">
+                        <span class="context-label">Company:</span>
+                        <span class="context-value" id="ctx-company">{{ selected_user.company }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flag Evaluation Result -->
+            <div class="info-card">
+                <h3>Flag Evaluation</h3>
+                <div class="context-details">
+                    <div class="context-row">
+                        <span class="context-label">Flag Key:</span>
+                        <code id="flag-key-display">{{ flag_key }}</code>
+                    </div>
+                    <div class="context-row">
+                        <span class="context-label">Variation:</span>
+                        <span class="context-value highlight" id="flag-variation">{{ banner_variation }}</span>
+                    </div>
+                    <div class="context-row">
+                        <span class="context-label">Source:</span>
+                        <span class="context-value" id="flag-source">Server-side (Python SDK)</span>
+                    </div>
+                    <div class="context-row">
+                        <span class="context-label">Reason:</span>
+                        <span class="context-value" id="flag-reason">Initial page load</span>
+                    </div>
+                </div>
+
+                <div class="targeting-explanation" id="targeting-explanation">
+                    <h4>Why this variation?</h4>
+                    <p id="explanation-text">{{ selected_user.description }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Targeting Rules Summary -->
+        <div class="rules-summary">
+            <h3>Targeting Rules (Configure in LaunchDarkly Dashboard)</h3>
+            <table class="rules-table">
+                <thead>
+                    <tr>
+                        <th>Priority</th>
+                        <th>Type</th>
+                        <th>Rule / Target</th>
+                        <th>Serves Variation</th>
+                        <th>Example User</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td><span class="badge badge-individual">Individual</span></td>
+                        <td>User key = <code>user-003</code> (Carol)</td>
+                        <td><code>internal-preview</code></td>
+                        <td>Carol Executive</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td><span class="badge badge-rule">Rule</span></td>
+                        <td><code>plan</code> is one of <code>free</code></td>
+                        <td><code>upgrade-cta</code></td>
+                        <td>Alice, Dave</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td><span class="badge badge-rule">Rule</span></td>
+                        <td><code>plan</code> is one of <code>enterprise</code></td>
+                        <td><code>enterprise-cta</code></td>
+                        <td>Bob</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td><span class="badge badge-default">Default</span></td>
+                        <td>All other users</td>
+                        <td><code>control</code></td>
+                        <td>Eve</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- Landing Page Content (below the fold)                              -->
+    <!-- ================================================================= -->
+    <section class="features-section">
+        <h2>Why Teams Choose ABC Company</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">&#9889;</div>
+                <h3>Ship Faster</h3>
+                <p>Deploy code anytime and release features when ready. Decouple deployments from releases.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#128737;</div>
+                <h3>Reduce Risk</h3>
+                <p>Test in production safely with percentage rollouts and instant kill switches.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#127919;</div>
+                <h3>Target Precisely</h3>
+                <p>Deliver personalized experiences based on user attributes, segments, and rules.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#128202;</div>
+                <h3>Measure Impact</h3>
+                <p>Run experiments and measure the impact of every feature on your business metrics.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- Footer                                                             -->
+    <!-- ================================================================= -->
+    <footer class="footer">
+        <p>&copy; 2026 ABC Company. Powered by LaunchDarkly — Part 2: Targeting Demo</p>
+    </footer>
+
+    <!-- ================================================================= -->
+    <!-- JavaScript: Pass server-side values to client                      -->
+    <!-- ================================================================= -->
+    <script>
+        // =================================================================
+        // SERVER-TO-CLIENT DATA BRIDGE
+        // =================================================================
+        // These values are injected by Flask's Jinja2 template engine.
+        // They pass server-side data to the client-side JavaScript SDK.
+        //
+        // __LD_CLIENT_SIDE_ID__    — LaunchDarkly client-side ID (NOT secret)
+        //                            REPLACE in your .env file with your actual ID
+        // __LD_FLAG_KEY__          — The feature flag key ("hero-banner")
+        // __LD_INITIAL_VARIATION__ — Server-side evaluated variation (for initial render)
+        //                            Acts as FALLBACK if JS SDK fails to load
+        // __LD_SELECTED_USER_ID__  — Currently selected user (for button highlighting)
+        // __LD_USERS__             — All pre-defined users with their context attributes
+        //                            Used by app.js to build LD contexts for identify()
+        // =================================================================
+        window.__LD_CLIENT_SIDE_ID__ = "{{ client_side_id }}";
+        window.__LD_FLAG_KEY__ = "{{ flag_key }}";
+        window.__LD_INITIAL_VARIATION__ = "{{ banner_variation }}";
+        window.__LD_SELECTED_USER_ID__ = "{{ selected_user_id }}";
+        window.__LD_USERS__ = {{ users_json | safe }};
+    </script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

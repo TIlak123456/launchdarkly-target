@@ -1,0 +1,26 @@
+# Environment variables (contains SDK keys — do NOT commit)
+.env
+.env.save
+.env.bak
+
+# Interview prep notes (personal — do NOT commit)
+interview-prep-part2.md
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

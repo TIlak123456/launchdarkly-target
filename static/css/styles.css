@@ -1,0 +1,573 @@
+/* ==========================================================================
+   ABC Company Landing Page — Targeting Demo (Part 2)
+   
+   The hero banner component is controlled by the LaunchDarkly "hero-banner"
+   multivariate string flag. Different users see different banners based
+   on individual targeting and rule-based targeting.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   CSS Variables
+   --------------------------------------------------------------------------- */
+
+:root {
+    --bg-primary: #f8f9fa;
+    --bg-secondary: #ffffff;
+    --bg-dark: #0d1117;
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --text-light: #ffffff;
+    --border-color: #dee2e6;
+    --accent-color: #4361ee;
+    --accent-hover: #3a56d4;
+    --success-color: #28a745;
+    --warning-color: #f0ad4e;
+    --info-color: #17a2b8;
+    --purple-color: #6f42c1;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* ---------------------------------------------------------------------------
+   Base Styles
+   --------------------------------------------------------------------------- */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+/* ---------------------------------------------------------------------------
+   Navigation Bar
+   --------------------------------------------------------------------------- */
+
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    height: 60px;
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: var(--shadow);
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo {
+    font-size: 1.5rem;
+    color: var(--accent-color);
+}
+
+.company-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.navbar-links {
+    display: flex;
+    gap: 8px;
+}
+
+.nav-link {
+    text-decoration: none;
+    color: var(--text-secondary);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.nav-link:hover {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.nav-link.active {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------------
+   User Selector Panel
+   --------------------------------------------------------------------------- */
+
+.user-selector-panel {
+    background-color: #1a1a2e;
+    color: var(--text-light);
+    padding: 16px 32px;
+    border-bottom: 2px solid var(--accent-color);
+}
+
+.user-selector-header {
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+}
+
+.selector-icon {
+    margin-right: 6px;
+}
+
+.selector-hint {
+    color: #8b949e;
+    font-weight: 400;
+}
+
+.user-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.user-btn {
+    background-color: #2d2d44;
+    color: var(--text-light);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    min-width: 180px;
+}
+
+.user-btn:hover {
+    background-color: #3d3d55;
+    border-color: #4361ee;
+}
+
+.user-btn.active {
+    background-color: #4361ee;
+    border-color: #58a6ff;
+}
+
+.user-btn-name {
+    display: block;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 2px;
+}
+
+.user-btn-meta {
+    display: block;
+    font-size: 0.75rem;
+    color: #adb5bd;
+}
+
+.user-btn.active .user-btn-meta {
+    color: #c8d6e5;
+}
+
+/* ---------------------------------------------------------------------------
+   Hero Banner — THE TARGETED COMPONENT
+   
+   Each variation has its own color scheme and styling to make the
+   difference immediately obvious when switching between users.
+   --------------------------------------------------------------------------- */
+
+.hero-banner {
+    padding: 60px 32px;
+    text-align: center;
+    transition: background 0.5s ease, color 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Hide all banner content by default, show only the active variation */
+.banner-content {
+    display: none;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+/* --- Control Banner (default) --- */
+.hero-control {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: var(--text-light);
+}
+
+.hero-control .banner-content[data-variation="control"] {
+    display: block;
+}
+
+/* --- Upgrade CTA Banner (rule: plan = free) --- */
+.hero-upgrade-cta {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: var(--text-light);
+}
+
+.hero-upgrade-cta .banner-content[data-variation="upgrade-cta"] {
+    display: block;
+}
+
+/* --- Enterprise CTA Banner (rule: plan = enterprise) --- */
+.hero-enterprise-cta {
+    background: linear-gradient(135deg, #0c3547 0%, #1a6b8a 50%, #2ecc71 100%);
+    color: var(--text-light);
+}
+
+.hero-enterprise-cta .banner-content[data-variation="enterprise-cta"] {
+    display: block;
+}
+
+/* --- Internal Preview Banner (individual: carol) --- */
+.hero-internal-preview {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: var(--text-light);
+    border: 2px solid #e94560;
+}
+
+.hero-internal-preview .banner-content[data-variation="internal-preview"] {
+    display: block;
+}
+
+/* Banner Typography */
+.hero-banner h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 16px;
+    line-height: 1.2;
+}
+
+.hero-banner p {
+    font-size: 1.15rem;
+    margin-bottom: 28px;
+    opacity: 0.9;
+    line-height: 1.7;
+}
+
+.banner-badge {
+    display: inline-block;
+    background-color: rgba(255, 255, 255, 0.2);
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* CTA Buttons */
+.cta-button {
+    display: inline-block;
+    padding: 14px 28px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    margin: 0 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.cta-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.cta-primary {
+    background-color: #ffffff;
+    color: #4361ee;
+}
+
+.cta-secondary {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.cta-upgrade {
+    background-color: #ffffff;
+    color: #f5576c;
+}
+
+.cta-enterprise {
+    background-color: #2ecc71;
+    color: #ffffff;
+}
+
+.cta-preview {
+    background-color: #e94560;
+    color: #ffffff;
+}
+
+/* ---------------------------------------------------------------------------
+   Targeting Info Panel
+   --------------------------------------------------------------------------- */
+
+.targeting-panel {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 32px;
+}
+
+.targeting-panel > h2 {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+}
+
+.targeting-panel > p {
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.info-card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+}
+
+.info-card h3 {
+    font-size: 1rem;
+    margin-bottom: 16px;
+    color: var(--accent-color);
+}
+
+.context-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.context-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.context-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    min-width: 80px;
+}
+
+.context-value {
+    font-size: 0.9rem;
+}
+
+.context-value.highlight {
+    background-color: #e8f0fe;
+    color: #1a73e8;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+code {
+    background-color: #e9ecef;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.targeting-explanation {
+    margin-top: 16px;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border-left: 3px solid var(--accent-color);
+}
+
+.targeting-explanation h4 {
+    font-size: 0.85rem;
+    color: var(--accent-color);
+    margin-bottom: 4px;
+}
+
+.targeting-explanation p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* ---------------------------------------------------------------------------
+   Rules Summary Table
+   --------------------------------------------------------------------------- */
+
+.rules-summary {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+    margin-bottom: 40px;
+}
+
+.rules-summary h3 {
+    font-size: 1rem;
+    margin-bottom: 16px;
+    color: var(--accent-color);
+}
+
+.rules-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.rules-table th {
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.rules-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+}
+
+.rules-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-individual {
+    background-color: #fce4ec;
+    color: #c62828;
+}
+
+.badge-rule {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+.badge-default {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+/* ---------------------------------------------------------------------------
+   Features Section
+   --------------------------------------------------------------------------- */
+
+.features-section {
+    max-width: 1100px;
+    margin: 0 auto 40px;
+    padding: 0 32px;
+    text-align: center;
+}
+
+.features-section h2 {
+    font-size: 1.75rem;
+    margin-bottom: 32px;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.feature-card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 28px;
+    box-shadow: var(--shadow);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.feature-icon {
+    font-size: 2rem;
+    margin-bottom: 12px;
+}
+
+.feature-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+}
+
+.feature-card p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* ---------------------------------------------------------------------------
+   Footer
+   --------------------------------------------------------------------------- */
+
+.footer {
+    text-align: center;
+    padding: 24px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    border-top: 1px solid var(--border-color);
+    margin-top: 40px;
+}
+
+/* ---------------------------------------------------------------------------
+   Responsive Design
+   --------------------------------------------------------------------------- */
+
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        height: auto;
+        padding: 12px;
+        gap: 8px;
+    }
+
+    .user-buttons {
+        flex-direction: column;
+    }
+
+    .user-btn {
+        min-width: auto;
+    }
+
+    .hero-banner h1 {
+        font-size: 1.75rem;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cta-button {
+        display: block;
+        margin: 8px auto;
+        max-width: 280px;
+    }
+}
