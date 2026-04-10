@@ -3,8 +3,6 @@
 .env.save
 .env.bak
 
-# Interview prep notes (personal — do NOT commit)
-interview-prep-part2.md
 
 # Python
 __pycache__/
